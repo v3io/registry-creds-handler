@@ -47,9 +47,6 @@ lint:
 	$(GOPATH)/bin/golangci-lint run -v
 	@echo Done.
 
-
-.PHONY: ensure-gopath
-ensure-gopath:
-ifndef GOPATH
-	$(error GOPATH must be set)
-endif
+.PHONY: test
+test:
+	go test -v ./pkg/...

@@ -44,7 +44,10 @@ func (h *Handler) Run() error {
 		}
 
 		// should never return
-		util.SyncSecret(h.kubeClientSet, h.refreshRate, h.ecr.Namespace, h.ecr.SecretName, h.createOrUpdateECRSecret) // nolint: errcheck
+		err = util.SyncSecret(h.kubeClientSet, h.refreshRate, h.ecr.Namespace, h.ecr.SecretName, h.createOrUpdateECRSecret)
+		if err != nil {
+			return errors.Wrap(err, "Failed to sync secret")
+		}
 	default:
 		return errors.New("Received unsupported registry kind")
 	}

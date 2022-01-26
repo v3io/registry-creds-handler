@@ -135,6 +135,6 @@ func (suite *ECRSuite) createLogger() logger.Logger {
 	return loggerInstance
 }
 
-func TestRuntime(t *testing.T) {
+func TestECR(t *testing.T) {
 	suite.Run(t, new(ECRSuite))
 }
