@@ -1,6 +1,9 @@
 package registry
 
 import (
+	"encoding/json"
+	"os"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
@@ -12,50 +15,60 @@ import (
 
 type ECR struct {
 	*abstractRegistry
-	region          string
-	assumeRole      string
-	accessKeyID     string
-	secretAccessKey string
+	awsCreds AWSCreds
 }
 
 func NewECRRegistry(parentLogger logger.Logger,
 	secretName string,
 	namespace string,
+	creds string,
 	endpoints []string,
-	region string,
-	assumeRole string,
-	accessKeyID string,
-	secretAccessKey string,
 ) (*ECR, error) {
-	newECR := &ECR{
-		region:          region,
-		assumeRole:      assumeRole,
-		accessKeyID:     accessKeyID,
-		secretAccessKey: secretAccessKey,
-	}
 
-	abstractRegistry, err := newAbstractRegistry(parentLogger.GetChild("ecr"), secretName, namespace, endpoints)
+	abstractRegistry, err := newAbstractRegistry(parentLogger.GetChild("ecr"), secretName, namespace, creds, endpoints)
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to create abstract registry")
 	}
-	newECR.abstractRegistry = abstractRegistry
+
+	newECR := &ECR{
+		abstractRegistry: abstractRegistry,
+	}
 	return newECR, nil
 }
 
-func (e *ECR) ValidateECRParams() error {
+func (e *ECR) EnrichAndValidateECRParams() error {
 	err := e.validateAbstractParams()
 	if err != nil {
 		return errors.Wrap(err, "Failed abstract registry params validation")
 	}
-	if e.region == "" {
+
+	// parse aws credentials
+	var awsCreds AWSCreds
+	if err := json.Unmarshal([]byte(e.Creds), &awsCreds); err != nil {
+		return errors.Wrap(err, "Failed to parse AWS credentials")
+	}
+
+	if awsCreds.Region == "" {
 		return errors.New("AWS Region is required")
 	}
-	if e.accessKeyID == "" {
-		return errors.New("AWS Access Key ID is required")
+
+	if awsCreds.AccessKeyID == "" {
+		e.logger.Info("Did not receive AWS Access Key ID, checking env")
+		awsCreds.AccessKeyID = os.Getenv("AWS_ACCESS_KEY_ID")
+		if awsCreds.AccessKeyID == "" {
+			return errors.New("AWS Access Key ID is required")
+		}
 	}
-	if e.secretAccessKey == "" {
-		return errors.New("AWS Secret Access Key is required")
+
+	if awsCreds.SecretAccessKey == "" {
+		e.logger.Info("Did not receive AWS Secret Access Key, checking env")
+		awsCreds.SecretAccessKey = os.Getenv("AWS_SECRET_ACCESS_KEY")
+		if awsCreds.SecretAccessKey == "" {
+			return errors.New("AWS Secret Access Key is required")
+		}
 	}
+
+	e.awsCreds = awsCreds
 
 	return nil
 }
@@ -80,13 +93,13 @@ func (e *ECR) GetAuthorizationToken() (*string, error) {
 
 func (e *ECR) createECRClient() *ecr.ECR {
 	sess := session.Must(session.NewSession(&aws.Config{
-		Region: aws.String(e.region),
-		Credentials: credentials.NewStaticCredentials(e.accessKeyID,
-			e.secretAccessKey,
+		Region: aws.String(e.awsCreds.Region),
+		Credentials: credentials.NewStaticCredentials(e.awsCreds.AccessKeyID,
+			e.awsCreds.SecretAccessKey,
 			"")}))
 
-	if e.assumeRole != "" {
-		creds := stscreds.NewCredentials(sess, e.assumeRole)
+	if e.awsCreds.AssumeRole != "" {
+		creds := stscreds.NewCredentials(sess, e.awsCreds.AssumeRole)
 		return ecr.New(sess, &aws.Config{Credentials: creds})
 	}
 

@@ -9,6 +9,7 @@ type abstractRegistry struct {
 	logger     logger.Logger
 	SecretName string
 	Namespace  string
+	Creds      string
 	Endpoints  []string
 	Token      Token
 }
@@ -16,12 +17,14 @@ type abstractRegistry struct {
 func newAbstractRegistry(loggerInstance logger.Logger,
 	secretName string,
 	namespace string,
+	creds string,
 	endpoints []string,
 ) (*abstractRegistry, error) {
 	abstractRegistry := &abstractRegistry{
 		logger:     loggerInstance.GetChild("registry-generic"),
 		SecretName: secretName,
 		Namespace:  namespace,
+		Creds:      creds,
 		Endpoints:  endpoints,
 	}
 	return abstractRegistry, nil

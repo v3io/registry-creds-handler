@@ -8,6 +8,7 @@ require (
 	github.com/nuclio/logger v0.0.1
 	github.com/nuclio/loggerus v0.0.6
 	github.com/sirupsen/logrus v1.8.0
+	github.com/stretchr/testify v1.7.0
 	github.com/v3io/version-go v0.0.2
 	k8s.io/api v0.21.8
 	k8s.io/apimachinery v0.21.8
@@ -22,6 +23,7 @@ require (
 	github.com/google/go-cmp v0.5.5 // indirect
 	github.com/google/gofuzz v1.1.0 // indirect
 	github.com/googleapis/gnostic v0.4.1 // indirect
+	github.com/hashicorp/golang-lru v0.5.1 // indirect
 	github.com/imdario/mergo v0.3.5 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/json-iterator/go v1.1.10 // indirect
@@ -29,6 +31,7 @@ require (
 	github.com/magefile/mage v1.10.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.1 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	golang.org/x/net v0.0.0-20211216030914-fe4d6282115f // indirect
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d // indirect
@@ -40,6 +43,7 @@ require (
 	google.golang.org/protobuf v1.26.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
+	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c // indirect
 	k8s.io/klog/v2 v2.9.0 // indirect
 	k8s.io/utils v0.0.0-20210521133846-da695404a2bc // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.1.2 // indirect

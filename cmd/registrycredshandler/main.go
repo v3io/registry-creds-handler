@@ -25,12 +25,10 @@ func run() error {
 	secretName := flag.String("secret-name", "", "Secret name must be unique")
 	namespace := flag.String("namespace", "", "Kubernetes namespace of secret")
 	registryURIs := flag.String("registry-uris", "", "Comma seperated list of registry URIs")
-	refreshRate := flag.Int("refresh-rate", 60, "Secret refresh rate in min, default is 60 min")
-	awsRegion := flag.String("aws-region", "", "Registry region on AWS")
-	awsAccessKeyID := flag.String("aws-access-key-id", os.Getenv("AWS_ACCESS_KEY_ID"), "If not specified will retrieve from env")
-	awsSecretAccessKey := flag.String("aws-secret-access-key", os.Getenv("AWS_SECRET_ACCESS_KEY"), "If not specified will retrieve from env")
-	awsAssumeRole := flag.String("aws-assume-role", "", "If specified AWS Client will assume this role")
+	refreshRate := flag.Int64("refresh-rate", 60, "Secret refresh rate in min, default is 60 min")
 	kubeConfigPath := flag.String("kube-config-path", "", "Kubernetes cluster config path, If not specified uses in cluster config")
+	creds := flag.String("creds", "", "Credentials to retrieve registry authorization token in JSON format, entries must be in lowerCamelCase")
+
 	flag.Parse()
 
 	// logger conf
@@ -53,11 +51,8 @@ func run() error {
 	ecr, err := registry.NewECRRegistry(logger,
 		*secretName,
 		*namespace,
-		strings.Split(*registryURIs, ","),
-		*awsRegion,
-		*awsAssumeRole,
-		*awsAccessKeyID,
-		*awsSecretAccessKey)
+		*creds,
+		strings.Split(*registryURIs, ","))
 	if err != nil {
 		return errors.Wrap(err, "Failed to create ECR")
 	}
@@ -65,7 +60,7 @@ func run() error {
 	// validate the requested registry kind params
 	switch *registryKind {
 	case registry.ECRRegistryKind:
-		err := ecr.ValidateECRParams()
+		err := ecr.EnrichAndValidateECRParams()
 		if err != nil {
 			return errors.Wrap(err, "Failed ECR params validation")
 		}

@@ -9,3 +9,10 @@ type Token struct {
 	AccessToken *string
 	Endpoints   []string
 }
+
+type AWSCreds struct {
+	Region          string `json:"region"`
+	AccessKeyID     string `json:"accessKeyID,omitempty"`
+	SecretAccessKey string `json:"secretAccessKey,omitempty"`
+	AssumeRole      string `json:"assumeRole,omitempty"`
+}
