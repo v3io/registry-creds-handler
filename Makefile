@@ -1,4 +1,6 @@
 VERSION ?= "unstable"
+GOPATH ?= $(shell go env GOPATH)
+OS_NAME = $(shell uname)
 GIT_COMMIT ?= $(shell git rev-parse HEAD)
 REGISTRY_HANDLER_IMAGE_NAME ?= "gcr.io/iguazio/registry-creds-handler:$(VERSION)"
 
