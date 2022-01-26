@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/v3io/registry-creds-handler/pkg/client"
+	"github.com/v3io/registry-creds-handler/pkg/registry"
 
 	"github.com/nuclio/errors"
 	v1 "k8s.io/api/core/v1"
@@ -40,11 +40,10 @@ func NewKubeClientSet(kubeConfigPath string) (*kubernetes.Clientset, error) {
 }
 
 // GetSecret get a secret
-func GetSecret(ctx context.Context,
-	kubeClient *kubernetes.Clientset,
+func GetSecret(kubeClient *kubernetes.Clientset,
 	namespace string,
 	secretName string) (*v1.Secret, error) {
-	secret, err := kubeClient.CoreV1().Secrets(namespace).Get(ctx, secretName, metav1.GetOptions{})
+	secret, err := kubeClient.CoreV1().Secrets(namespace).Get(context.TODO(), secretName, metav1.GetOptions{})
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to get secret")
 	}
@@ -53,23 +52,21 @@ func GetSecret(ctx context.Context,
 }
 
 // CreateSecret creates a secret
-func CreateSecret(ctx context.Context,
-	kubeClient *kubernetes.Clientset,
-	secret *v1.Secret) error {
-	_, err := kubeClient.CoreV1().Secrets(secret.Namespace).Create(ctx, secret, metav1.CreateOptions{})
+func CreateSecret(kubeClient *kubernetes.Clientset,
+	secret *v1.Secret) (*v1.Secret, error) {
+	createdSecret, err := kubeClient.CoreV1().Secrets(secret.Namespace).Create(context.TODO(), secret, metav1.CreateOptions{})
 
 	if err != nil {
-		return errors.Wrapf(err, "Failed to create secret: %s", secret.Name)
+		return nil, errors.Wrapf(err, "Failed to create secret: %s", secret.Name)
 	}
 
-	return nil
+	return createdSecret, nil
 }
 
 // UpdateSecret updates a secret
-func UpdateSecret(ctx context.Context,
-	kubeClient *kubernetes.Clientset,
+func UpdateSecret(kubeClient *kubernetes.Clientset,
 	secret *v1.Secret) error {
-	_, err := kubeClient.CoreV1().Secrets(secret.Namespace).Update(ctx, secret, metav1.UpdateOptions{})
+	_, err := kubeClient.CoreV1().Secrets(secret.Namespace).Update(context.TODO(), secret, metav1.UpdateOptions{})
 
 	if err != nil {
 		return errors.Wrapf(err, "Failed to update secret: %s", secret.Name)
@@ -79,7 +76,7 @@ func UpdateSecret(ctx context.Context,
 }
 
 // GenerateSecretObj creates a secret object with given access token and docker config for imagePullSecrets if possible
-func GenerateSecretObj(token client.Token) *v1.Secret {
+func GenerateSecretObj(token registry.Token) *v1.Secret {
 	secret := &v1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: token.SecretName,

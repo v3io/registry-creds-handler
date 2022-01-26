@@ -1,7 +1,20 @@
+VERSION ?= "unstable"
+GIT_COMMIT ?= $(shell git rev-parse HEAD)
+REGISTRY_HANDLER_IMAGE_NAME ?= "gcr.io/iguazio/registry-creds-handler:$(VERSION)"
 
-#
-# Misc
-#
+# Link flags
+GO_LINK_FLAGS ?= -s -w
+GO_LINK_FLAGS_INJECT_VERSION := $(GO_LINK_FLAGS) \
+	-X github.com/v3io/version-go.gitCommit=$(GIT_COMMIT) \
+	-X github.com/v3io/version-go.label=$(VERSION)
+
+.PHONY: build
+build:
+	docker build \
+		--build-arg GO_LINK_FLAGS="$(GO_LINK_FLAGS_INJECT_VERSION)" \
+		--file cmd/registrycredshandler/Dockerfile \
+		--tag $(REGISTRY_HANDLER_IMAGE_NAME) \
+		.
 
 .PHONY: fmt
 fmt:
