@@ -39,8 +39,6 @@ lint:
 	$(GOPATH)/bin/impi \
 		--local github.com/v3io/registry-creds-handler/ \
 		--scheme stdLocalThirdParty \
-		--skip pkg/platform/kube/apis \
-		--skip pkg/platform/kube/client \
 		./cmd/... ./pkg/...
 
 	@echo Linting...
