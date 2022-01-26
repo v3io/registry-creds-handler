@@ -44,7 +44,7 @@ lint:
 		./cmd/... ./pkg/...
 
 	@echo Linting...
-	$(GOPATH)/bin/golangci-lint run -v
+	$(GOPATH)/bin/golangci-lint run -v --timeout 3m0s
 	@echo Done.
 
 .PHONY: test
