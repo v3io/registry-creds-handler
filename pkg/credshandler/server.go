@@ -99,9 +99,9 @@ func (s *Server) handlePostECRToken(writer http.ResponseWriter, req *http.Reques
 	}
 
 	token := client.Token{
-		SecretName:     params.SecretName,
-		AccessToken:    accessToken,
-		Endpoints:      params.Endpoints,
+		SecretName:  params.SecretName,
+		AccessToken: accessToken,
+		Endpoints:   params.Endpoints,
 	}
 	secretObj := util.GenerateSecretObj(token)
 	err = util.CreateSecret(req.Context(), s.kubeClientSet, secretObj)
