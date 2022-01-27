@@ -47,6 +47,6 @@ lint:
 	$(GOPATH)/bin/golangci-lint run -v --timeout 3m0s
 	@echo Done.
 
-.PHONY: test
-test:
-	go test -v ./pkg/...
+.PHONY: test-unit
+test-unit:
+	go test -v ./pkg/... -short

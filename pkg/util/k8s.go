@@ -9,7 +9,7 @@ import (
 	"github.com/v3io/registry-creds-handler/pkg/registry"
 
 	"github.com/nuclio/errors"
-	v1 "k8s.io/api/core/v1"
+	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/client-go/kubernetes"
@@ -52,10 +52,11 @@ func NewKubeClientSet(kubeConfigPath string) (*kubernetes.Clientset, error) {
 }
 
 // GetSecret get a secret
-func GetSecret(kubeClient *kubernetes.Clientset,
+func GetSecret(ctx context.Context,
+	kubeClient *kubernetes.Clientset,
 	namespace string,
 	secretName string) (*v1.Secret, error) {
-	secret, err := kubeClient.CoreV1().Secrets(namespace).Get(context.TODO(), secretName, metav1.GetOptions{})
+	secret, err := kubeClient.CoreV1().Secrets(namespace).Get(ctx, secretName, metav1.GetOptions{})
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to get secret")
 	}
@@ -64,9 +65,10 @@ func GetSecret(kubeClient *kubernetes.Clientset,
 }
 
 // CreateSecret creates a secret
-func CreateSecret(kubeClient *kubernetes.Clientset,
+func CreateSecret(ctx context.Context,
+	kubeClient *kubernetes.Clientset,
 	secret *v1.Secret) error {
-	_, err := kubeClient.CoreV1().Secrets(secret.Namespace).Create(context.TODO(), secret, metav1.CreateOptions{})
+	_, err := kubeClient.CoreV1().Secrets(secret.Namespace).Create(ctx, secret, metav1.CreateOptions{})
 
 	if err != nil {
 		return errors.Wrapf(err, "Failed to create secret: %s", secret.Name)
@@ -76,9 +78,10 @@ func CreateSecret(kubeClient *kubernetes.Clientset,
 }
 
 // UpdateSecret updates a secret
-func UpdateSecret(kubeClient *kubernetes.Clientset,
+func UpdateSecret(ctx context.Context,
+	kubeClient *kubernetes.Clientset,
 	secret *v1.Secret) error {
-	_, err := kubeClient.CoreV1().Secrets(secret.Namespace).Update(context.TODO(), secret, metav1.UpdateOptions{})
+	_, err := kubeClient.CoreV1().Secrets(secret.Namespace).Update(ctx, secret, metav1.UpdateOptions{})
 
 	if err != nil {
 		return errors.Wrapf(err, "Failed to update secret: %s", secret.Name)
@@ -87,8 +90,26 @@ func UpdateSecret(kubeClient *kubernetes.Clientset,
 	return nil
 }
 
+func CreateOrUpdateSecret(ctx context.Context,
+	kubeClient *kubernetes.Clientset,
+	namespace string,
+	secret *v1.Secret) error {
+	_, err := GetSecret(ctx, kubeClient, namespace, secret.Name)
+	if err != nil {
+		if err = CreateSecret(ctx, kubeClient, secret); err != nil {
+			return errors.Wrap(err, "Failed to create secret")
+		}
+
+	} else {
+		if err = UpdateSecret(ctx, kubeClient, secret); err != nil {
+			return errors.Wrap(err, "Failed to update secret")
+		}
+	}
+	return nil
+}
+
 // GenerateSecretObj creates a secret object with given access token and docker config for imagePullSecrets if possible
-func GenerateSecretObj(token registry.Token) *v1.Secret {
+func GenerateSecretObj(token *registry.Token) (*v1.Secret, error) {
 	secret := &v1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: token.SecretName,
@@ -96,33 +117,32 @@ func GenerateSecretObj(token registry.Token) *v1.Secret {
 	}
 
 	// If possible, add auth to docker config
-	// "auths": {
-	//  	"<registry-endpoint>": {
-	//			"auth": "..."
-	//	}
-	if token.Endpoints != nil && len(token.Endpoints) > 0 {
+	if token.RegistryUri != "" {
+
+		// { "auths": { "<registry-endpoint>": { "auth": "..." }}}
 		auths := map[string]RegistryAuth{}
-		for _, endpoint := range token.Endpoints {
-			auths[endpoint] = RegistryAuth{
-				Auth: *token.AccessToken,
-			}
+		auths[token.RegistryUri] = RegistryAuth{
+			Auth: *token.AccessToken,
 		}
+
 		configJSON, err := json.Marshal(DockerConfigJSON{Auths: auths})
 		if err != nil {
-			return secret
+			return nil, errors.Wrap(err, "Failed to marshal docker config json")
 		}
+
 		secret.Data = map[string][]byte{
 			".dockerconfigjson": configJSON,
 			"ACCESS_TOKEN":      []byte(*token.AccessToken),
 		}
 		secret.Type = "kubernetes.io/dockerconfigjson"
+
 	} else {
 		secret.Data = map[string][]byte{
 			"ACCESS_TOKEN": []byte(*token.AccessToken),
 		}
 	}
 
-	return secret
+	return secret, nil
 }
 
 // SyncSecret watches a secret in a specific namespace and handles the secret every interval

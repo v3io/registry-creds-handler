@@ -4,42 +4,39 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"strings"
 
-	"github.com/v3io/registry-creds-handler/pkg"
-	"github.com/v3io/registry-creds-handler/pkg/registry"
+	"github.com/v3io/registry-creds-handler/pkg/registry/factory"
+	"github.com/v3io/registry-creds-handler/pkg/registrycredshandler"
 	"github.com/v3io/registry-creds-handler/pkg/util"
 
 	"github.com/nuclio/errors"
-	"github.com/nuclio/loggerus"
-	"github.com/sirupsen/logrus"
 	"github.com/v3io/version-go"
 )
 
 func run() error {
-	fmt.Printf("Handler version:\n%#v", version.Get().String())
 
 	// args
-	logLevel := flag.String("log-level", "debug", "Set handler's log level")
-	registryKind := flag.String("registry-kind", "ecr", "Docker registry kind (ecr)")
-	secretName := flag.String("secret-name", "", "Secret name must be unique")
-	namespace := flag.String("namespace", "", "Kubernetes namespace of secret")
-	registryURIs := flag.String("registry-uris", "", "Comma seperated list of registry URIs")
-	refreshRate := flag.Int64("refresh-rate", 60, "Secret refresh rate in min, default is 60 min")
-	kubeConfigPath := flag.String("kube-config-path", "", "Kubernetes cluster config path, If not specified uses in cluster config")
+	verbose := flag.Bool("verbose", false, "Allow verbosity logging")
+	registryKind := flag.String("registry-kind", "ecr", "Docker registry kind to authenticate against (Default: ecr)")
+	secretName := flag.String("secret-name", "", "Secret name to create or update with refreshed registry credentials")
+	namespace := flag.String("namespace", "", "Kubernetes namespace to create secret on")
+	registryUri := flag.String("registry-uri", "", "Registry URI to use for authentication")
+	refreshRate := flag.Int64("refresh-rate", 60, "Refresh credentials rate in min (Default: 60 minutes)")
+	kubeConfigPath := flag.String("kubeconfig-path", "", "Kubernetes config path, If not specified uses in cluster config")
 	creds := flag.String("creds", "", "Credentials to retrieve registry authorization token in JSON format, entries must be in lowerCamelCase")
+	showVersion := flag.Bool("version", false, "Show version and exit")
+	logsFormat := flag.String("logs-format", "humanreadable", "Logging format (json|humanreadable) (Default: humanreadable)")
 
 	flag.Parse()
 
-	// logger conf
-	parsedLogLevel, err := logrus.ParseLevel(*logLevel)
-	if err != nil {
-		return errors.Wrap(err, "Failed to parse log level")
+	if *showVersion {
+		fmt.Printf("%#v", version.Get())
+		return nil
 	}
 
-	logger, err := loggerus.NewJSONLoggerus("main", parsedLogLevel, os.Stdout)
+	logger, err := util.CreateLogger("main", *verbose, os.Stdout, *logsFormat)
 	if err != nil {
-		return errors.Wrap(err, "Failed to create new logger")
+		return errors.Wrap(err, "Failed to create logger")
 	}
 
 	// create clients
@@ -48,36 +45,22 @@ func run() error {
 		return errors.Wrap(err, "Failed to create k8s clientset")
 	}
 
-	ecr, err := registry.NewECRRegistry(logger,
-		*secretName,
-		*namespace,
-		*creds,
-		strings.Split(*registryURIs, ","))
+	// create registry
+	registry, err := factory.CreateRegistry(logger, *registryKind, *secretName, *namespace, *creds, *registryUri)
 	if err != nil {
-		return errors.Wrap(err, "Failed to create ECR")
-	}
-
-	// validate the requested registry kind params
-	switch *registryKind {
-	case registry.ECRRegistryKind:
-		err := ecr.EnrichAndValidateECRParams()
-		if err != nil {
-			return errors.Wrap(err, "Failed ECR params validation")
-		}
-	default:
-		return errors.New("Received unsupported registry kind")
+		return errors.Wrap(err, "Failed to create k8s clientset")
 	}
 
 	// start handler
-	handler, err := pkg.NewHandler(logger, kubeClientSet, ecr, *refreshRate, *registryKind)
+	handler, err := registrycredshandler.NewHandler(logger, kubeClientSet, registry, *refreshRate, *registryKind)
 	if err != nil {
 		return errors.Wrap(err, "Failed to create new handler")
 	}
-	if err = handler.Run(); err != nil {
+	if err = handler.Start(); err != nil {
 		return errors.Wrap(err, "Failed to start handler")
 	}
 
-	return nil
+	select {}
 }
 
 func main() {

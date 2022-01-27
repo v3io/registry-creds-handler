@@ -7,7 +7,7 @@ const (
 type Token struct {
 	SecretName  string
 	AccessToken *string
-	Endpoints   []string
+	RegistryUri string
 }
 
 type AWSCreds struct {
