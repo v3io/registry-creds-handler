@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/v3io/registry-creds-handler/pkg/registry"
 	"github.com/v3io/registry-creds-handler/pkg/registry/mock"
 	"github.com/v3io/registry-creds-handler/pkg/util"
 
@@ -35,6 +36,10 @@ func (suite *HandlerSuite) TestRefreshingSecretSanity() {
 	handler, err := NewHandler(loggerInstance, mockedKubeClientSet, mockedRegistry, 10, "mock")
 	suite.Require().NoError(err)
 
+	// setup mock for called assertion
+	handler.refreshRate = time.Duration(300) * time.Millisecond
+	mockedRegistry.On("GetAuthToken").Return(registry.Token{}, nil).Once()
+
 	ctx, cancel := context.WithCancel(context.Background())
 
 	go func() {
@@ -49,6 +54,7 @@ func (suite *HandlerSuite) TestRefreshingSecretSanity() {
 
 	// let the refresher stop
 	time.Sleep(time.Duration(1) * time.Second)
+	mockedRegistry.AssertCalled(suite.T(), "GetAuthToken")
 	suite.Require().Error(err)
 }
 

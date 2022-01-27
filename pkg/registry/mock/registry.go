@@ -6,9 +6,11 @@ import (
 
 	"github.com/nuclio/errors"
 	"github.com/nuclio/logger"
+	"github.com/stretchr/testify/mock"
 )
 
 type Registry struct {
+	mock.Mock
 	*abstract.Registry
 }
 
@@ -43,5 +45,7 @@ func (r *Registry) GetAuthToken() (*registry.Token, error) {
 		AccessToken: "mocked access token",
 		RegistryUri: r.RegistryUri,
 	}
+	r.On("GetAuthToken").Return(mockedToken, nil).Once()
+	r.Called()
 	return mockedToken, nil
 }
