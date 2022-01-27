@@ -16,7 +16,9 @@ type ECRSuite struct {
 }
 
 func (suite *ECRSuite) TestEnrichAndValidateECRParams() {
-	loggerInstance, _ := util.CreateLogger("ecr.suite", true, os.Stdout, "humanreadable")
+	loggerInstance, err := util.CreateLogger("test", true, os.Stdout, "humanreadable")
+	suite.Require().NoError(err)
+
 	tests := []struct {
 		name             string
 		abstractRegistry *abstract.Registry

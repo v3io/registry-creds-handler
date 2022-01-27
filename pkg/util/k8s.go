@@ -3,18 +3,14 @@ package util
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	"time"
 
 	"github.com/v3io/registry-creds-handler/pkg/registry"
 
 	"github.com/nuclio/errors"
 	"k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
@@ -34,7 +30,7 @@ func GetClientConfig(kubeConfigPath string) (*rest.Config, error) {
 	return rest.InClusterConfig()
 }
 
-func NewKubeClientSet(kubeConfigPath string) (*kubernetes.Clientset, error) {
+func NewKubeClientSet(kubeConfigPath string) (kubernetes.Interface, error) {
 
 	cfg, err := GetClientConfig(kubeConfigPath)
 
@@ -53,7 +49,7 @@ func NewKubeClientSet(kubeConfigPath string) (*kubernetes.Clientset, error) {
 
 // GetSecret get a secret
 func GetSecret(ctx context.Context,
-	kubeClient *kubernetes.Clientset,
+	kubeClient kubernetes.Interface,
 	namespace string,
 	secretName string) (*v1.Secret, error) {
 	secret, err := kubeClient.CoreV1().Secrets(namespace).Get(ctx, secretName, metav1.GetOptions{})
@@ -66,7 +62,7 @@ func GetSecret(ctx context.Context,
 
 // CreateSecret creates a secret
 func CreateSecret(ctx context.Context,
-	kubeClient *kubernetes.Clientset,
+	kubeClient kubernetes.Interface,
 	secret *v1.Secret) error {
 	_, err := kubeClient.CoreV1().Secrets(secret.Namespace).Create(ctx, secret, metav1.CreateOptions{})
 
@@ -79,7 +75,7 @@ func CreateSecret(ctx context.Context,
 
 // UpdateSecret updates a secret
 func UpdateSecret(ctx context.Context,
-	kubeClient *kubernetes.Clientset,
+	kubeClient kubernetes.Interface,
 	secret *v1.Secret) error {
 	_, err := kubeClient.CoreV1().Secrets(secret.Namespace).Update(ctx, secret, metav1.UpdateOptions{})
 
@@ -91,7 +87,7 @@ func UpdateSecret(ctx context.Context,
 }
 
 func CreateOrUpdateSecret(ctx context.Context,
-	kubeClient *kubernetes.Clientset,
+	kubeClient kubernetes.Interface,
 	namespace string,
 	secret *v1.Secret) error {
 	_, err := GetSecret(ctx, kubeClient, namespace, secret.Name)
@@ -122,7 +118,7 @@ func GenerateSecretObj(token *registry.Token) (*v1.Secret, error) {
 		// { "auths": { "<registry-endpoint>": { "auth": "..." }}}
 		auths := map[string]RegistryAuth{}
 		auths[token.RegistryUri] = RegistryAuth{
-			Auth: *token.AccessToken,
+			Auth: token.AccessToken,
 		}
 
 		configJSON, err := json.Marshal(DockerConfigJSON{Auths: auths})
@@ -132,53 +128,15 @@ func GenerateSecretObj(token *registry.Token) (*v1.Secret, error) {
 
 		secret.Data = map[string][]byte{
 			".dockerconfigjson": configJSON,
-			"ACCESS_TOKEN":      []byte(*token.AccessToken),
+			"ACCESS_TOKEN":      []byte(token.AccessToken),
 		}
 		secret.Type = "kubernetes.io/dockerconfigjson"
 
 	} else {
 		secret.Data = map[string][]byte{
-			"ACCESS_TOKEN": []byte(*token.AccessToken),
+			"ACCESS_TOKEN": []byte(token.AccessToken),
 		}
 	}
 
 	return secret, nil
-}
-
-// SyncSecret watches a secret in a specific namespace and handles the secret every interval
-func SyncSecret(kubeClient *kubernetes.Clientset,
-	interval time.Duration,
-	namespace string,
-	secretName string,
-	handler func() error) error {
-
-	// once closed, watching the secret will seize
-	stopCh := make(chan struct{})
-
-	// Extend the selector to include specific secret to monitor
-	selector, err := fields.ParseSelector("metadata.name=" + secretName)
-	if err != nil {
-		return errors.Wrap(err, "Failed to create secret selector")
-	}
-
-	lw := cache.NewListWatchFromClient(kubeClient.CoreV1().RESTClient(), "secrets", namespace, selector)
-	_, c := cache.NewInformer(
-		lw,
-		&v1.Secret{},
-		interval,
-		cache.ResourceEventHandlerFuncs{
-			AddFunc: func(obj interface{}) {
-				if err := handler(); err != nil {
-					fmt.Println(err)
-				}
-			},
-			UpdateFunc: func(_ interface{}, obj interface{}) {
-				if err := handler(); err != nil {
-					fmt.Println(err)
-				}
-			},
-		},
-	)
-	c.Run(stopCh)
-	return nil
 }

@@ -55,7 +55,7 @@ func (r *Registry) EnrichAndValidate() error {
 	}
 
 	if awsCreds.AccessKeyID == "" {
-		r.Logger.Info("Did not receive AWS Access Key ID, checking env")
+		r.Logger.InfoWith("Did not receive AWS Access Key ID, checking env")
 		awsCreds.AccessKeyID = os.Getenv("AWS_ACCESS_KEY_ID")
 		if awsCreds.AccessKeyID == "" {
 			return errors.New("AWS Access Key ID is required")
@@ -63,7 +63,7 @@ func (r *Registry) EnrichAndValidate() error {
 	}
 
 	if awsCreds.SecretAccessKey == "" {
-		r.Logger.Info("Did not receive AWS Secret Access Key, checking env")
+		r.Logger.InfoWith("Did not receive AWS Secret Access Key, checking env")
 		awsCreds.SecretAccessKey = os.Getenv("AWS_SECRET_ACCESS_KEY")
 		if awsCreds.SecretAccessKey == "" {
 			return errors.New("AWS Secret Access Key is required")
@@ -85,13 +85,13 @@ func (r *Registry) GetAuthToken() (*registry.Token, error) {
 		r.Logger.WarnWith("Failed to get ECR authorization token", "error", err.Error())
 		return nil, errors.Wrap(err, "Failed to get authorization token from ecr client")
 	}
-	r.Logger.Debug("Got GetAuthorizationToken response from ECR")
+	r.Logger.DebugWith("Got GetAuthorizationToken response from ECR")
 
 	// This token has access to any ECR registry that the IAM principal has access to
 	for _, auth := range resp.AuthorizationData {
 		token := &registry.Token{
 			SecretName:  r.SecretName,
-			AccessToken: auth.AuthorizationToken,
+			AccessToken: *auth.AuthorizationToken,
 			RegistryUri: r.RegistryUri,
 		}
 		r.Logger.InfoWith("Got authorization token", "ExpiresAt", auth.ExpiresAt)
@@ -102,7 +102,7 @@ func (r *Registry) GetAuthToken() (*registry.Token, error) {
 }
 
 func (r *Registry) createECRClient() *ecr.ECR {
-	r.Logger.Debug("Creating ECR Client")
+	r.Logger.DebugWith("Creating ECR Client")
 	sess := session.Must(session.NewSession(&aws.Config{
 		Region: aws.String(r.awsCreds.Region),
 		Credentials: credentials.NewStaticCredentials(r.awsCreds.AccessKeyID,
