@@ -50,9 +50,10 @@ func (h *Handler) Start() error {
 
 		h.logger.InfoWithCtx(ctx, "Starting secret refresher")
 		if err := h.keepRefreshingSecret(ctx); err != nil {
-			h.logger.WarnWithCtx(ctx, "Failed and stopped refreshing secret")
+			h.logger.ErrorWithCtx(ctx, "Failed and stopped refreshing secret", "err", err.Error())
+			return
 		}
-		h.logger.InfoWithCtx(ctx, "Stopped refreshing secret")
+		h.logger.WarnWithCtx(ctx, "Stopped refreshing secret")
 	}()
 	select {}
 }
