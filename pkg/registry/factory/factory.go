@@ -34,7 +34,7 @@ func CreateRegistry(parentLogger logger.Logger,
 			return nil, errors.Wrap(err, "Failed ECR params validation")
 		}
 	default:
-		return nil, errors.Errorf("Can't create registry - unsupported: %s", registryKind)
+		return nil, errors.Errorf("Unsupported registry kind: %s", registryKind)
 	}
 
 	return newRegistry, nil

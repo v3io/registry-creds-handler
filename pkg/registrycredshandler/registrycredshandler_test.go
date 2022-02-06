@@ -25,7 +25,7 @@ func (suite *HandlerSuite) TestCreateOrUpdateSecretSanity() {
 	handler, err := NewHandler(loggerInstance, mockedKubeClientSet, mockedRegistry, 0, "mock")
 	suite.Require().NoError(err)
 
-	err = handler.createOrUpdateSecret()
+	err = handler.createOrUpdateSecret(context.Background())
 	suite.Require().NoError(err)
 }
 

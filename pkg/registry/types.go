@@ -11,7 +11,7 @@ type Token struct {
 }
 
 type AWSCreds struct {
-	Region          string `json:"region"`
+	Region          string `json:"region,omitempty"`
 	AccessKeyID     string `json:"accessKeyID,omitempty"`
 	SecretAccessKey string `json:"secretAccessKey,omitempty"`
 	AssumeRole      string `json:"assumeRole,omitempty"`

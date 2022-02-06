@@ -104,8 +104,8 @@ func CreateOrUpdateSecret(ctx context.Context,
 	return nil
 }
 
-// GenerateSecretObj creates a secret object with given access token and docker config for imagePullSecrets if possible
-func GenerateSecretObj(token *registry.Token) (*v1.Secret, error) {
+// CompileRegistryAuthSecret creates a secret object with given access token and docker config for imagePullSecrets if possible
+func CompileRegistryAuthSecret(token *registry.Token) (*v1.Secret, error) {
 	secret := &v1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: token.SecretName,

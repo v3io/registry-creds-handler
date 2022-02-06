@@ -34,12 +34,13 @@ func NewRegistry(loggerInstance logger.Logger,
 	return abstractRegistry, nil
 }
 
-func (ar *Registry) ValidateAbstractParams() error {
+func (ar *Registry) ValidateParameters() error {
 	if ar.SecretName == "" {
-		return errors.New("Token Secret Name is required")
+		return errors.New("Secret Name must not be empty")
 	}
 	if ar.Namespace == "" {
-		return errors.New("Namespace is required")
+		ar.Logger.DebugWith("Did not receive namespace, using `default`")
+		ar.Namespace = "default"
 	}
 	return nil
 }

@@ -1,6 +1,8 @@
 package mock
 
 import (
+	"context"
+
 	"github.com/v3io/registry-creds-handler/pkg/registry"
 	"github.com/v3io/registry-creds-handler/pkg/registry/abstract"
 
@@ -32,14 +34,14 @@ func NewRegistry(parentLogger logger.Logger,
 }
 
 func (r *Registry) EnrichAndValidate() error {
-	err := r.ValidateAbstractParams()
+	err := r.ValidateParameters()
 	if err != nil {
 		return errors.Wrap(err, "Failed abstract registry params validation")
 	}
 	return nil
 }
 
-func (r *Registry) GetAuthToken() (*registry.Token, error) {
+func (r *Registry) GetAuthToken(ctx context.Context) (*registry.Token, error) {
 	mockedToken := &registry.Token{
 		SecretName:  r.SecretName,
 		AccessToken: "mocked access token",
