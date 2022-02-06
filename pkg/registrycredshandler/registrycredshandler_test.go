@@ -38,7 +38,12 @@ func (suite *HandlerSuite) TestRefreshingSecretSanity() {
 
 	// setup mock for called assertion
 	handler.refreshRate = time.Duration(300) * time.Millisecond
-	mockedRegistry.On("GetAuthToken").Return(registry.Token{}, nil).Once()
+	mockedToken := &registry.Token{
+		SecretName:  mockedRegistry.SecretName,
+		AccessToken: "mocked access token",
+		RegistryUri: mockedRegistry.RegistryUri,
+	}
+	mockedRegistry.On("GetAuthToken").Return(mockedToken, nil)
 
 	ctx, cancel := context.WithCancel(context.Background())
 

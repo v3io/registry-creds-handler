@@ -50,8 +50,9 @@ func (h *Handler) Start() error {
 
 		h.logger.InfoWithCtx(ctx, "Starting secret refresher")
 		if err := h.keepRefreshingSecret(ctx); err != nil {
-			panic(err)
+			h.logger.WarnWithCtx(ctx, "Failed and stopped refreshing secret")
 		}
+		h.logger.InfoWithCtx(ctx, "Stopped refreshing secret")
 	}()
 	select {}
 }
@@ -66,7 +67,7 @@ func (h *Handler) keepRefreshingSecret(ctx context.Context) error {
 
 		// Context was canceled, exit with error
 		case <-ctx.Done():
-			return errors.Wrap(ctx.Err(), "Stopped refreshing secret")
+			return errors.Wrap(ctx.Err(), "Context was canceled, stopped refreshing secret")
 
 		// Got a tick, time to refresh secret
 		case <-tick:

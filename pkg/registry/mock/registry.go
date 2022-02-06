@@ -34,20 +34,11 @@ func NewRegistry(parentLogger logger.Logger,
 }
 
 func (r *Registry) EnrichAndValidate() error {
-	err := r.ValidateParameters()
-	if err != nil {
-		return errors.Wrap(err, "Failed abstract registry params validation")
-	}
-	return nil
+	args := r.Called()
+	return args.Error(0)
 }
 
 func (r *Registry) GetAuthToken(ctx context.Context) (*registry.Token, error) {
-	mockedToken := &registry.Token{
-		SecretName:  r.SecretName,
-		AccessToken: "mocked access token",
-		RegistryUri: r.RegistryUri,
-	}
-	r.On("GetAuthToken").Return(mockedToken, nil).Once()
-	r.Called()
-	return mockedToken, nil
+	args := r.Called()
+	return args.Get(0).(*registry.Token), args.Error(1)
 }

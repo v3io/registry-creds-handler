@@ -101,7 +101,8 @@ func (r *Registry) GetAuthToken(ctx context.Context) (*registry.Token, error) {
 	}
 	r.Logger.DebugWithCtx(ctx, "Got GetAuthorizationToken response from ECR")
 
-	// This token has access to any ECR registry that the IAM principal has access to
+	// AuthorizationData is a list as it used to return a token per registry, that is now deprecated.
+	// The returned token can be used to access any Amazon ECR registry that the IAM principal has access to.
 	for _, auth := range resp.AuthorizationData {
 		token := &registry.Token{
 			SecretName:  r.SecretName,
