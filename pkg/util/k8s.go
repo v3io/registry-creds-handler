@@ -107,7 +107,7 @@ func CreateOrUpdateSecret(ctx context.Context,
 func CompileRegistryAuthSecret(token *registry.Token) (*v1.Secret, error) {
 	secret := &v1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: token.SecretName,
+			Name:      token.SecretName,
 			Namespace: token.Namespace,
 		},
 	}
