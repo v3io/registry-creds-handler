@@ -92,11 +92,11 @@ func (h *Handler) createOrUpdateSecret(ctx context.Context) error {
 		return errors.Wrap(err, "Failed to generate secret object")
 	}
 
-	h.logger.DebugWithCtx(ctx, "Creating or updating secret", "SecretName", token.SecretName, "Namespace", token.SecretName)
-	if err = util.CreateOrUpdateSecret(ctx, h.kubeClientSet, "", secret); err != nil {
+	h.logger.DebugWithCtx(ctx, "Creating or updating secret", "SecretName", token.SecretName, "Namespace", token.Namespace)
+	if err = util.CreateOrUpdateSecret(ctx, h.kubeClientSet, secret); err != nil {
 		return errors.Wrap(err, "Failed to create or update secret")
 	}
 
-	h.logger.InfoWithCtx(ctx, "Secret created or updated successfully", "SecretName", token.SecretName, "Namespace", token.SecretName)
+	h.logger.InfoWithCtx(ctx, "Secret created or updated successfully", "SecretName", token.SecretName, "Namespace", token.Namespace)
 	return nil
 }

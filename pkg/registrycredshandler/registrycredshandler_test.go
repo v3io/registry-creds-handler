@@ -41,6 +41,7 @@ func (suite *HandlerSuite) TestRefreshingSecretSanity() {
 	handler.refreshRate = time.Duration(300) * time.Millisecond
 	mockedToken := &registry.Token{
 		SecretName:  mockedRegistry.SecretName,
+		Namespace:   mockedRegistry.Namespace,
 		AccessToken: "mocked access token",
 		RegistryUri: mockedRegistry.RegistryUri,
 	}

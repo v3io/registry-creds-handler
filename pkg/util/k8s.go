@@ -88,9 +88,8 @@ func UpdateSecret(ctx context.Context,
 
 func CreateOrUpdateSecret(ctx context.Context,
 	kubeClient kubernetes.Interface,
-	namespace string,
 	secret *v1.Secret) error {
-	_, err := GetSecret(ctx, kubeClient, namespace, secret.Name)
+	_, err := GetSecret(ctx, kubeClient, secret.Namespace, secret.Name)
 	if err != nil {
 		if err = CreateSecret(ctx, kubeClient, secret); err != nil {
 			return errors.Wrap(err, "Failed to create secret")
@@ -109,6 +108,7 @@ func CompileRegistryAuthSecret(token *registry.Token) (*v1.Secret, error) {
 	secret := &v1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: token.SecretName,
+			Namespace: token.Namespace,
 		},
 	}
 

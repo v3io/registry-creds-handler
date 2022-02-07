@@ -6,6 +6,7 @@ const (
 
 type Token struct {
 	SecretName  string
+	Namespace   string
 	AccessToken string
 	RegistryUri string
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"os"
+	"strings"
 
 	"github.com/v3io/registry-creds-handler/pkg/registry"
 	"github.com/v3io/registry-creds-handler/pkg/registry/abstract"
@@ -58,12 +59,13 @@ func (r *Registry) Enrich() error {
 	// parse aws credentials
 	var awsCreds registry.AWSCreds
 	if err := json.Unmarshal([]byte(r.Creds), &awsCreds); err != nil {
-		return errors.Wrap(err, "Failed to parse AWS credentials")
+		r.Logger.WarnWith("Failed to parse json AWS credentials, checking env", "err", err.Error())
 	}
 
-	awsCreds.Region = util.GetFirstNonEmptyString([]string{awsCreds.Region, os.Getenv("AWS_DEFAULT_REGION")})
-	awsCreds.AccessKeyID = util.GetFirstNonEmptyString([]string{awsCreds.Region, os.Getenv("AWS_ACCESS_KEY_ID")})
-	awsCreds.SecretAccessKey = util.GetFirstNonEmptyString([]string{awsCreds.Region, os.Getenv("AWS_SECRET_ACCESS_KEY")})
+	awsCreds.Region = util.GetFirstNonEmptyString([]string{awsCreds.Region, strings.TrimSpace(os.Getenv("AWS_DEFAULT_REGION"))})
+	awsCreds.AccessKeyID = util.GetFirstNonEmptyString([]string{awsCreds.AccessKeyID, strings.TrimSpace(os.Getenv("AWS_ACCESS_KEY_ID"))})
+	awsCreds.SecretAccessKey = util.GetFirstNonEmptyString([]string{awsCreds.SecretAccessKey, strings.TrimSpace(os.Getenv("AWS_SECRET_ACCESS_KEY"))})
+	awsCreds.AssumeRole = util.GetFirstNonEmptyString([]string{awsCreds.AssumeRole, strings.TrimSpace(os.Getenv("AWS_ROLE_ARN"))})
 	r.awsCreds = awsCreds
 
 	return nil
@@ -106,6 +108,7 @@ func (r *Registry) GetAuthToken(ctx context.Context) (*registry.Token, error) {
 	for _, auth := range resp.AuthorizationData {
 		token := &registry.Token{
 			SecretName:  r.SecretName,
+			Namespace:   r.Namespace,
 			AccessToken: *auth.AuthorizationToken,
 			RegistryUri: r.RegistryUri,
 		}

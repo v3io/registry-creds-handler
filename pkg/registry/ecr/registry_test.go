@@ -46,7 +46,7 @@ func (suite *ECRSuite) TestEnrichAndValidateECRParams() {
 				Logger:      loggerInstance,
 				SecretName:  "secret",
 				Namespace:   "namespace",
-				Creds:       "{\"region\": \"region\"}",
+				Creds:       "",
 				RegistryUri: "",
 				Token:       registry.Token{},
 			},
@@ -115,6 +115,10 @@ func (suite *ECRSuite) TestEnrichAndValidateECRParams() {
 				suite.Require().NoError(err)
 				err = os.Setenv("AWS_SECRET_ACCESS_KEY", "some secret access key")
 				suite.Require().NoError(err)
+				err = os.Setenv("AWS_ROLE_ARN", "some role arn")
+				suite.Require().NoError(err)
+				err = os.Setenv("AWS_DEFAULT_REGION", "some region")
+				suite.Require().NoError(err)
 			}
 
 			r := &Registry{
@@ -123,6 +127,13 @@ func (suite *ECRSuite) TestEnrichAndValidateECRParams() {
 			err := r.EnrichAndValidate()
 			if !test.error {
 				suite.Require().NoError(err)
+			}
+
+			if test.withEnv {
+				suite.Require().Equal(os.Getenv("AWS_ACCESS_KEY_ID"), r.awsCreds.AccessKeyID)
+				suite.Require().Equal(os.Getenv("AWS_SECRET_ACCESS_KEY"), r.awsCreds.SecretAccessKey)
+				suite.Require().Equal(os.Getenv("AWS_ROLE_ARN"), r.awsCreds.AssumeRole)
+				suite.Require().Equal(os.Getenv("AWS_DEFAULT_REGION"), r.awsCreds.Region)
 			}
 		})
 	}
