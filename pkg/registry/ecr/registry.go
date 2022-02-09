@@ -120,14 +120,15 @@ func (r *Registry) GetAuthToken(ctx context.Context) (*registry.Token, error) {
 		token := &registry.Token{
 			SecretName:  r.SecretName,
 			Namespace:   r.Namespace,
-			AccessToken: *auth.AuthorizationToken,
+			Password:    *auth.AuthorizationToken,
+			Username:    "AWS",
 			RegistryUri: r.RegistryUri,
 		}
 		r.Logger.InfoWithCtx(ctx, "Got authorization token", "ExpiresAt", auth.ExpiresAt)
 		return token, nil
 	}
 
-	return nil, errors.New("Failed to retrieve ECR access token")
+	return nil, errors.New("Failed to retrieve access token")
 }
 
 func (r *Registry) createECRClient(ctx context.Context) *ecr.ECR {

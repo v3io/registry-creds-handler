@@ -2,7 +2,9 @@ package common
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
+	"fmt"
 
 	"github.com/v3io/registry-creds-handler/pkg/registry"
 
@@ -19,7 +21,10 @@ type DockerConfigJSON struct {
 }
 
 type RegistryAuth struct {
-	Auth string `json:"auth"`
+	Auth     string `json:"auth"`
+	Password string `json:"password"`
+	Username string `json:"username"`
+	Email    string `json:"email"`
 }
 
 func GetClientConfig(kubeConfigPath string) (*rest.Config, error) {
@@ -105,39 +110,33 @@ func CreateOrUpdateSecret(ctx context.Context,
 	return nil
 }
 
-// CompileRegistryAuthSecret creates a secret object with given access token and docker config for imagePullSecrets if possible
+// CompileRegistryAuthSecret creates a secret object with docker config json
 func CompileRegistryAuthSecret(token *registry.Token) (*v1.Secret, error) {
 	secret := &v1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      token.SecretName,
 			Namespace: token.Namespace,
 		},
+		Type: "kubernetes.io/dockerconfigjson",
 	}
 
-	// If possible, add auth to docker config
-	if token.RegistryUri != "" {
+	auths := map[string]RegistryAuth{}
+	auths[token.RegistryUri] = RegistryAuth{
+		Auth:     fmt.Sprintf("%s:%s", token.Username, token.Password),
+		Password: token.Password,
+		Username: token.Username,
+		Email:    "ignored@v3io.io",
+	}
 
-		// { "auths": { "<registry-endpoint>": { "auth": "..." }}}
-		auths := map[string]RegistryAuth{}
-		auths[token.RegistryUri] = RegistryAuth{
-			Auth: token.AccessToken,
-		}
+	configJSON, err := json.Marshal(DockerConfigJSON{Auths: auths})
+	if err != nil {
+		return nil, errors.Wrap(err, "Failed to marshal docker config json")
+	}
 
-		configJSON, err := json.Marshal(DockerConfigJSON{Auths: auths})
-		if err != nil {
-			return nil, errors.Wrap(err, "Failed to marshal docker config json")
-		}
-
-		secret.Data = map[string][]byte{
-			".dockerconfigjson": configJSON,
-			"ACCESS_TOKEN":      []byte(token.AccessToken),
-		}
-		secret.Type = "kubernetes.io/dockerconfigjson"
-
-	} else {
-		secret.Data = map[string][]byte{
-			"ACCESS_TOKEN": []byte(token.AccessToken),
-		}
+	encodedConfig := make([]byte, base64.StdEncoding.EncodedLen(len(configJSON)))
+	base64.StdEncoding.Encode(encodedConfig, configJSON)
+	secret.Data = map[string][]byte{
+		".dockerconfigjson": encodedConfig,
 	}
 
 	return secret, nil
