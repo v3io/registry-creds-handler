@@ -27,7 +27,7 @@ func CreateRegistry(parentLogger logger.Logger,
 			creds,
 			registryUri)
 		if err != nil {
-			return nil, errors.Wrap(err, "Failed to create ECR")
+			return nil, errors.Wrap(err, "Failed to create ECR kind")
 		}
 		if err := newRegistry.EnrichAndValidate(); err != nil {
 			return nil, errors.Wrap(err, "Failed to enrich and validate")

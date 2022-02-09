@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/v3io/registry-creds-handler/pkg/common"
-	"github.com/v3io/registry-creds-handler/pkg/registry"
 	"github.com/v3io/registry-creds-handler/pkg/registry/abstract"
 
 	"github.com/stretchr/testify/suite"
@@ -35,7 +34,6 @@ func (suite *ECRSuite) TestEnrichAndValidateECRParams() {
 				Namespace:   "namespace",
 				Creds:       "{\"region\": \"region\", \"accessKeyID\": \"some access key id\", \"secretAccessKey\": \"some secret access key\"}",
 				RegistryUri: "",
-				Token:       registry.Token{},
 			},
 			error:   false,
 			withEnv: false,
@@ -48,7 +46,6 @@ func (suite *ECRSuite) TestEnrichAndValidateECRParams() {
 				Namespace:   "namespace",
 				Creds:       "",
 				RegistryUri: "",
-				Token:       registry.Token{},
 			},
 			error:   false,
 			withEnv: true,
@@ -63,7 +60,6 @@ func (suite *ECRSuite) TestEnrichAndValidateECRParams() {
 				Namespace:   "namespace",
 				Creds:       "{\"region\": \"region\", \"secretAccessKey\": \"some secret access key\"}",
 				RegistryUri: "",
-				Token:       registry.Token{},
 			},
 			error:   true,
 			withEnv: false,
@@ -76,7 +72,6 @@ func (suite *ECRSuite) TestEnrichAndValidateECRParams() {
 				Namespace:   "namespace",
 				Creds:       "{\"accessKeyID\": \"some access key id\", \"secretAccessKey\": \"some secret access key\"}",
 				RegistryUri: "",
-				Token:       registry.Token{},
 			},
 			error:   true,
 			withEnv: false,
@@ -89,7 +84,6 @@ func (suite *ECRSuite) TestEnrichAndValidateECRParams() {
 				Namespace:   "namespace",
 				Creds:       "{\"region\": \"region\", \"accessKeyID\": \"some access key id\", \"secretAccessKey\": \"some secret access key\"}",
 				RegistryUri: "",
-				Token:       registry.Token{},
 			},
 			error:   true,
 			withEnv: false,
@@ -102,7 +96,6 @@ func (suite *ECRSuite) TestEnrichAndValidateECRParams() {
 				Namespace:   "",
 				Creds:       "{\"region\": \"region\", \"accessKeyID\": \"some access key id\", \"secretAccessKey\": \"some secret access key\"}",
 				RegistryUri: "",
-				Token:       registry.Token{},
 			},
 			error:   true,
 			withEnv: false,

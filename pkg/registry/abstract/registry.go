@@ -14,7 +14,6 @@ type Registry struct {
 	Namespace   string
 	Creds       string
 	RegistryUri string
-	Token       registry.Token
 }
 
 func NewRegistry(loggerInstance logger.Logger,

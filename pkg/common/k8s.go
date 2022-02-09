@@ -41,7 +41,7 @@ func NewKubeClientSet(kubeConfigPath string) (kubernetes.Interface, error) {
 	clientSet, err := kubernetes.NewForConfig(cfg)
 
 	if err != nil {
-		return nil, errors.Wrap(err, "Failed to get kube clientset")
+		return nil, errors.Wrap(err, "Failed to create kube clientset")
 	}
 
 	return clientSet, nil
