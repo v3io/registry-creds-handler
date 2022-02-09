@@ -120,8 +120,7 @@ func (r *Registry) GetAuthToken(ctx context.Context) (*registry.Token, error) {
 		token := &registry.Token{
 			SecretName:  r.SecretName,
 			Namespace:   r.Namespace,
-			Password:    *auth.AuthorizationToken,
-			Username:    "AWS",
+			Auth:        *auth.AuthorizationToken,
 			RegistryUri: r.RegistryUri,
 		}
 		r.Logger.InfoWithCtx(ctx, "Got authorization token", "ExpiresAt", auth.ExpiresAt)

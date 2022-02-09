@@ -2,9 +2,7 @@ package common
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
-	"fmt"
 
 	"github.com/v3io/registry-creds-handler/pkg/registry"
 
@@ -21,10 +19,7 @@ type DockerConfigJSON struct {
 }
 
 type RegistryAuth struct {
-	Auth     string `json:"auth"`
-	Password string `json:"password"`
-	Username string `json:"username"`
-	Email    string `json:"email"`
+	Auth string `json:"auth"`
 }
 
 func GetClientConfig(kubeConfigPath string) (*rest.Config, error) {
@@ -122,10 +117,7 @@ func CompileRegistryAuthSecret(token *registry.Token) (*v1.Secret, error) {
 
 	auths := map[string]RegistryAuth{}
 	auths[token.RegistryUri] = RegistryAuth{
-		Auth:     fmt.Sprintf("%s:%s", token.Username, token.Password),
-		Password: token.Password,
-		Username: token.Username,
-		Email:    "ignored@v3io.io",
+		Auth: token.Auth,
 	}
 
 	configJSON, err := json.Marshal(DockerConfigJSON{Auths: auths})
@@ -133,10 +125,8 @@ func CompileRegistryAuthSecret(token *registry.Token) (*v1.Secret, error) {
 		return nil, errors.Wrap(err, "Failed to marshal docker config json")
 	}
 
-	encodedConfig := make([]byte, base64.StdEncoding.EncodedLen(len(configJSON)))
-	base64.StdEncoding.Encode(encodedConfig, configJSON)
 	secret.Data = map[string][]byte{
-		".dockerconfigjson": encodedConfig,
+		".dockerconfigjson": configJSON,
 	}
 
 	return secret, nil

@@ -42,7 +42,7 @@ func (suite *HandlerSuite) TestRefreshingSecretSanity() {
 	mockedToken := &registry.Token{
 		SecretName:  mockedRegistry.SecretName,
 		Namespace:   mockedRegistry.Namespace,
-		Password:    "mocked access token",
+		Auth:        "username:password",
 		RegistryUri: mockedRegistry.RegistryUri,
 	}
 	mockedRegistry.On("GetAuthToken").Return(mockedToken, nil)
