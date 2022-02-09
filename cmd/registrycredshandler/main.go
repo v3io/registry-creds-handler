@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/v3io/registry-creds-handler/pkg/common"
 	"github.com/v3io/registry-creds-handler/pkg/registry/factory"
 	"github.com/v3io/registry-creds-handler/pkg/registrycredshandler"
-	"github.com/v3io/registry-creds-handler/pkg/util"
 
 	"github.com/nuclio/errors"
 	"github.com/v3io/version-go"
@@ -34,13 +34,13 @@ func run() error {
 		return nil
 	}
 
-	logger, err := util.CreateLogger("main", *verbose, os.Stdout, *logsFormat)
+	logger, err := common.CreateLogger("main", *verbose, os.Stdout, *logsFormat)
 	if err != nil {
 		return errors.Wrap(err, "Failed to create logger")
 	}
 
 	// create clients
-	kubeClientSet, err := util.NewKubeClientSet(*kubeConfigPath)
+	kubeClientSet, err := common.NewKubeClientSet(*kubeConfigPath)
 	if err != nil {
 		return errors.Wrap(err, "Failed to create k8s clientset")
 	}

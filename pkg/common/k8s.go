@@ -1,4 +1,4 @@
-package util
+package common
 
 import (
 	"context"
@@ -64,9 +64,10 @@ func GetSecret(ctx context.Context,
 func CreateSecret(ctx context.Context,
 	kubeClient kubernetes.Interface,
 	secret *v1.Secret) error {
-	_, err := kubeClient.CoreV1().Secrets(secret.Namespace).Create(ctx, secret, metav1.CreateOptions{})
 
-	if err != nil {
+	if _, err := kubeClient.CoreV1().Secrets(secret.Namespace).Create(ctx,
+		secret,
+		metav1.CreateOptions{}); err != nil {
 		return errors.Wrapf(err, "Failed to create secret: %s", secret.Name)
 	}
 
@@ -77,9 +78,10 @@ func CreateSecret(ctx context.Context,
 func UpdateSecret(ctx context.Context,
 	kubeClient kubernetes.Interface,
 	secret *v1.Secret) error {
-	_, err := kubeClient.CoreV1().Secrets(secret.Namespace).Update(ctx, secret, metav1.UpdateOptions{})
 
-	if err != nil {
+	if _, err := kubeClient.CoreV1().Secrets(secret.Namespace).Update(ctx,
+		secret,
+		metav1.UpdateOptions{}); err != nil {
 		return errors.Wrapf(err, "Failed to update secret: %s", secret.Name)
 	}
 
@@ -89,8 +91,8 @@ func UpdateSecret(ctx context.Context,
 func CreateOrUpdateSecret(ctx context.Context,
 	kubeClient kubernetes.Interface,
 	secret *v1.Secret) error {
-	_, err := GetSecret(ctx, kubeClient, secret.Namespace, secret.Name)
-	if err != nil {
+
+	if _, err := GetSecret(ctx, kubeClient, secret.Namespace, secret.Name); err != nil {
 		if err = CreateSecret(ctx, kubeClient, secret); err != nil {
 			return errors.Wrap(err, "Failed to create secret")
 		}

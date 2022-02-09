@@ -29,9 +29,8 @@ func CreateRegistry(parentLogger logger.Logger,
 		if err != nil {
 			return nil, errors.Wrap(err, "Failed to create ECR")
 		}
-		err = newRegistry.EnrichAndValidate()
-		if err != nil {
-			return nil, errors.Wrap(err, "Failed ECR params validation")
+		if err := newRegistry.EnrichAndValidate(); err != nil {
+			return nil, errors.Wrap(err, "Failed to enrich and validate")
 		}
 	default:
 		return nil, errors.Errorf("Unsupported registry kind: %s", registryKind)

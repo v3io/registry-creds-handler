@@ -6,9 +6,9 @@ import (
 	"os"
 	"strings"
 
+	"github.com/v3io/registry-creds-handler/pkg/common"
 	"github.com/v3io/registry-creds-handler/pkg/registry"
 	"github.com/v3io/registry-creds-handler/pkg/registry/abstract"
-	"github.com/v3io/registry-creds-handler/pkg/util"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -32,7 +32,12 @@ func NewRegistry(parentLogger logger.Logger,
 	newRegistry := &Registry{}
 
 	// create base
-	abstractRegistry, err := abstract.NewRegistry(parentLogger, newRegistry, secretName, namespace, creds, registryUri)
+	abstractRegistry, err := abstract.NewRegistry(parentLogger.GetChild("ecr"),
+		newRegistry,
+		secretName,
+		namespace,
+		creds,
+		registryUri)
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to create abstract registry")
 	}
@@ -43,18 +48,18 @@ func NewRegistry(parentLogger logger.Logger,
 
 func (r *Registry) EnrichAndValidate() error {
 
-	if err := r.Enrich(); err != nil {
-		return errors.Wrap(err, "Failed to enrich ECR Registry")
+	if err := r.enrich(); err != nil {
+		return errors.Wrap(err, "Failed to enrich Registry")
 	}
 
-	if err := r.Validate(); err != nil {
-		return errors.Wrap(err, "Failed to validate ECR Registry")
+	if err := r.validate(); err != nil {
+		return errors.Wrap(err, "Failed to validate Registry")
 	}
 
 	return nil
 }
 
-func (r *Registry) Enrich() error {
+func (r *Registry) enrich() error {
 
 	// parse aws credentials
 	var awsCreds registry.AWSCreds
@@ -62,17 +67,21 @@ func (r *Registry) Enrich() error {
 		r.Logger.WarnWith("Failed to parse json AWS credentials, checking env", "err", err.Error())
 	}
 
-	awsCreds.Region = util.GetFirstNonEmptyString([]string{awsCreds.Region, strings.TrimSpace(os.Getenv("AWS_DEFAULT_REGION"))})
-	awsCreds.AccessKeyID = util.GetFirstNonEmptyString([]string{awsCreds.AccessKeyID, strings.TrimSpace(os.Getenv("AWS_ACCESS_KEY_ID"))})
-	awsCreds.SecretAccessKey = util.GetFirstNonEmptyString([]string{awsCreds.SecretAccessKey, strings.TrimSpace(os.Getenv("AWS_SECRET_ACCESS_KEY"))})
-	awsCreds.AssumeRole = util.GetFirstNonEmptyString([]string{awsCreds.AssumeRole, strings.TrimSpace(os.Getenv("AWS_ROLE_ARN"))})
+	awsCreds.Region = common.GetFirstNonEmptyString(
+		[]string{awsCreds.Region, strings.TrimSpace(os.Getenv("AWS_DEFAULT_REGION"))})
+	awsCreds.AccessKeyID = common.GetFirstNonEmptyString(
+		[]string{awsCreds.AccessKeyID, strings.TrimSpace(os.Getenv("AWS_ACCESS_KEY_ID"))})
+	awsCreds.SecretAccessKey = common.GetFirstNonEmptyString(
+		[]string{awsCreds.SecretAccessKey, strings.TrimSpace(os.Getenv("AWS_SECRET_ACCESS_KEY"))})
+	awsCreds.AssumeRole = common.GetFirstNonEmptyString(
+		[]string{awsCreds.AssumeRole, strings.TrimSpace(os.Getenv("AWS_ROLE_ARN"))})
 	r.awsCreds = awsCreds
 
 	return nil
 }
 
-func (r *Registry) Validate() error {
-	if err := r.Registry.ValidateParameters(); err != nil {
+func (r *Registry) validate() error {
+	if err := r.Registry.Validate(); err != nil {
 		return errors.Wrap(err, "Failed to validate base parameters")
 	}
 
@@ -94,14 +103,16 @@ func (r *Registry) Validate() error {
 func (r *Registry) GetAuthToken(ctx context.Context) (*registry.Token, error) {
 	ecrClient := r.createECRClient(ctx)
 
-	r.Logger.DebugWithCtx(ctx, "Getting authorization token", "SecretName", r.SecretName, "Namespace", r.Namespace)
+	r.Logger.DebugWithCtx(ctx, "Getting authorization token",
+		"SecretName", r.SecretName,
+		"Namespace", r.Namespace)
 	resp, err := ecrClient.GetAuthorizationToken(&ecr.GetAuthorizationTokenInput{})
 
 	if err != nil {
-		r.Logger.WarnWithCtx(ctx, "Failed to get ECR authorization token", "error", err.Error())
+		r.Logger.WarnWithCtx(ctx, "Failed to get authorization token", "error", err.Error())
 		return nil, errors.Wrap(err, "Failed to get authorization token from ecr client")
 	}
-	r.Logger.DebugWithCtx(ctx, "Got GetAuthorizationToken response from ECR")
+	r.Logger.DebugWithCtx(ctx, "Got authorization token response")
 
 	// AuthorizationData is a list as it used to return a token per registry, that is now deprecated.
 	// The returned token can be used to access any Amazon ECR registry that the IAM principal has access to.
@@ -120,17 +131,20 @@ func (r *Registry) GetAuthToken(ctx context.Context) (*registry.Token, error) {
 }
 
 func (r *Registry) createECRClient(ctx context.Context) *ecr.ECR {
-	r.Logger.DebugWithCtx(ctx, "Creating ECR Client", "region", r.awsCreds.Region, "assumeRole", r.awsCreds.AssumeRole)
-	sess := session.Must(session.NewSession(&aws.Config{
+	r.Logger.DebugWithCtx(ctx, "Creating ECR Client",
+		"region", r.awsCreds.Region,
+		"assumeRole", r.awsCreds.AssumeRole)
+
+	sessionInstance := session.Must(session.NewSession(&aws.Config{
 		Region: aws.String(r.awsCreds.Region),
 		Credentials: credentials.NewStaticCredentials(r.awsCreds.AccessKeyID,
 			r.awsCreds.SecretAccessKey,
 			"")}))
 
 	if r.awsCreds.AssumeRole != "" {
-		creds := stscreds.NewCredentials(sess, r.awsCreds.AssumeRole)
-		return ecr.New(sess, &aws.Config{Credentials: creds})
+		creds := stscreds.NewCredentials(sessionInstance, r.awsCreds.AssumeRole)
+		return ecr.New(sessionInstance, &aws.Config{Credentials: creds})
 	}
 
-	return ecr.New(sess)
+	return ecr.New(sessionInstance)
 }

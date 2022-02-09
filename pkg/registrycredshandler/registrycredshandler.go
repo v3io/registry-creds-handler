@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/v3io/registry-creds-handler/pkg/common"
 	"github.com/v3io/registry-creds-handler/pkg/registry"
-	"github.com/v3io/registry-creds-handler/pkg/util"
 
 	"github.com/nuclio/errors"
 	"github.com/nuclio/logger"
@@ -60,7 +60,6 @@ func (h *Handler) Start() error {
 
 // keepRefreshingSecret will refresh the secret after every h.refreshRate until ctx is closed
 func (h *Handler) keepRefreshingSecret(ctx context.Context) error {
-	tick := time.Tick(h.refreshRate) // nolint: staticcheck
 
 	// Keep trying until we're timed out or got a result or got an error
 	for {
@@ -71,7 +70,7 @@ func (h *Handler) keepRefreshingSecret(ctx context.Context) error {
 			return errors.Wrap(ctx.Err(), "Context was canceled, stopped refreshing secret")
 
 		// Got a tick, time to refresh secret
-		case <-tick:
+		case <-time.After(h.refreshRate):
 			if err := h.createOrUpdateSecret(ctx); err != nil {
 				h.logger.WarnWithCtx(ctx, "Failed to refresh secret", "error", err.Error())
 			}
@@ -87,16 +86,21 @@ func (h *Handler) createOrUpdateSecret(ctx context.Context) error {
 		return errors.Wrap(err, "Failed to get authorization token")
 	}
 
-	secret, err := util.CompileRegistryAuthSecret(token)
+	secret, err := common.CompileRegistryAuthSecret(token)
 	if err != nil {
 		return errors.Wrap(err, "Failed to generate secret object")
 	}
 
-	h.logger.DebugWithCtx(ctx, "Creating or updating secret", "SecretName", token.SecretName, "Namespace", token.Namespace)
-	if err = util.CreateOrUpdateSecret(ctx, h.kubeClientSet, secret); err != nil {
+	h.logger.DebugWithCtx(ctx, "Creating or updating secret",
+		"SecretName", token.SecretName,
+		"Namespace", token.Namespace)
+
+	if err := common.CreateOrUpdateSecret(ctx, h.kubeClientSet, secret); err != nil {
 		return errors.Wrap(err, "Failed to create or update secret")
 	}
 
-	h.logger.InfoWithCtx(ctx, "Secret created or updated successfully", "SecretName", token.SecretName, "Namespace", token.Namespace)
+	h.logger.InfoWithCtx(ctx, "Secret created or updated successfully",
+		"SecretName", token.SecretName,
+		"Namespace", token.Namespace)
 	return nil
 }

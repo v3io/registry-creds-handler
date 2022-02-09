@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/v3io/registry-creds-handler/pkg/common"
 	"github.com/v3io/registry-creds-handler/pkg/registry"
 	"github.com/v3io/registry-creds-handler/pkg/registry/mock"
-	"github.com/v3io/registry-creds-handler/pkg/util"
 
 	"github.com/stretchr/testify/suite"
 	"k8s.io/client-go/kubernetes/fake"
@@ -19,7 +19,7 @@ type HandlerSuite struct {
 }
 
 func (suite *HandlerSuite) TestCreateOrUpdateSecretSanity() {
-	loggerInstance, _ := util.CreateLogger("test", true, os.Stdout, "humanreadable")
+	loggerInstance, _ := common.CreateLogger("test", true, os.Stdout, "humanreadable")
 	mockedRegistry, _ := mock.NewRegistry(loggerInstance, "secret name", "some namespace", "", "")
 	mockedKubeClientSet := fake.NewSimpleClientset()
 	handler, err := NewHandler(loggerInstance, mockedKubeClientSet, mockedRegistry, 0, "mock")
@@ -31,7 +31,7 @@ func (suite *HandlerSuite) TestCreateOrUpdateSecretSanity() {
 }
 
 func (suite *HandlerSuite) TestRefreshingSecretSanity() {
-	loggerInstance, _ := util.CreateLogger("test", true, os.Stdout, "humanreadable")
+	loggerInstance, _ := common.CreateLogger("test", true, os.Stdout, "humanreadable")
 	mockedRegistry, _ := mock.NewRegistry(loggerInstance, "secret name", "some namespace", "", "")
 	mockedKubeClientSet := fake.NewSimpleClientset()
 	handler, err := NewHandler(loggerInstance, mockedKubeClientSet, mockedRegistry, 10, "mock")

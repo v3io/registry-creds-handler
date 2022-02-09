@@ -4,9 +4,9 @@ import (
 	"os"
 	"testing"
 
+	"github.com/v3io/registry-creds-handler/pkg/common"
 	"github.com/v3io/registry-creds-handler/pkg/registry"
 	"github.com/v3io/registry-creds-handler/pkg/registry/abstract"
-	"github.com/v3io/registry-creds-handler/pkg/util"
 
 	"github.com/stretchr/testify/suite"
 )
@@ -16,7 +16,7 @@ type ECRSuite struct {
 }
 
 func (suite *ECRSuite) TestEnrichAndValidateECRParams() {
-	loggerInstance, err := util.CreateLogger("test", true, os.Stdout, "humanreadable")
+	loggerInstance, err := common.CreateLogger("test", true, os.Stdout, "humanreadable")
 	suite.Require().NoError(err)
 
 	tests := []struct {

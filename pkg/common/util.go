@@ -1,4 +1,4 @@
-package util
+package common
 
 func GetFirstNonEmptyString(strings []string) string {
 	for _, s := range strings {

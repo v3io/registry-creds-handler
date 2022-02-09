@@ -34,7 +34,7 @@ func NewRegistry(loggerInstance logger.Logger,
 	return abstractRegistry, nil
 }
 
-func (ar *Registry) ValidateParameters() error {
+func (ar *Registry) Validate() error {
 	if ar.SecretName == "" {
 		return errors.New("Secret Name must not be empty")
 	}
