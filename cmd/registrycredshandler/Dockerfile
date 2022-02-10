@@ -1,7 +1,5 @@
 FROM golang:alpine as builder
 
-ARG VERSION_LABEL=unstable
-
 ARG GO_LINK_FLAGS="-s -w"
 
 ARG GOOS=linux
@@ -13,7 +11,12 @@ WORKDIR /app
 COPY . .
 
 RUN apk add -U --no-cache ca-certificates
-RUN CGO_ENABLED=0 GOOS=$GOOS GOARCH=$GOARCH go build -a -installsuffix cgo -ldflags="${GO_LINK_FLAGS}"  -o registrycredshandler cmd/registrycredshandler/main.go
+
+RUN CGO_ENABLED=0 GOOS=$GOOS GOARCH=$GOARCH go build \
+    -a \
+    -installsuffix cgo \
+    -ldflags="${GO_LINK_FLAGS}"  \
+    -o registrycredshandler cmd/registrycredshandler/main.go
 
 FROM scratch
 
