@@ -93,7 +93,7 @@ jobs:
       - name: Build
         run: make build
         env:
-          PROVAZIO_REPOSITORY: ${{ env.RELEASE_REGISTRY }}/${{ env.RELEASE_REPO }}/
+          REGISTRY: ${{ env.RELEASE_REGISTRY }}/${{ env.RELEASE_REPO }}/
 
       - name: Push images
         run: make push
