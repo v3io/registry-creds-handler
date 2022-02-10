@@ -37,6 +37,9 @@ func (ar *Registry) Validate() error {
 	if ar.SecretName == "" {
 		return errors.New("Secret Name must not be empty")
 	}
+	if ar.RegistryUri == "" {
+		return errors.New("Registry URI must not be empty")
+	}
 	if ar.Namespace == "" {
 		ar.Logger.DebugWith("Did not receive namespace, using `default`")
 		ar.Namespace = "default"
