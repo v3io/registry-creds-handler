@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"os"
@@ -24,13 +25,14 @@ func run() error {
 	refreshRate := flag.Int64("refresh-rate", 60, "Refresh credentials rate in min (Default: 60 minutes)")
 	kubeConfigPath := flag.String("kubeconfig-path", "", "Kubernetes config path, If not specified uses in cluster config")
 	creds := flag.String("creds", "", "Credentials to retrieve registry authorization token in JSON format, entries must be in lowerCamelCase")
-	showVersion := flag.Bool("version", false, "Show version and exit")
+	showVersion := flag.Bool("version", false, "Show version in j and exit")
 	logsFormat := flag.String("logs-format", "humanreadable", "Logging format (json|humanreadable) (Default: humanreadable)")
 
 	flag.Parse()
 
 	if *showVersion {
-		fmt.Printf("%#v", version.Get())
+		encodedVersionInfo, _ := json.Marshal(version.Get())
+		fmt.Printf(string(encodedVersionInfo))
 		return nil
 	}
 
