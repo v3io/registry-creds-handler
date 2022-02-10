@@ -2,7 +2,8 @@ VERSION ?= "unstable"
 GOPATH ?= $(shell go env GOPATH)
 OS_NAME = $(shell uname)
 GIT_COMMIT ?= $(shell git rev-parse HEAD)
-REGISTRY_HANDLER_IMAGE_NAME ?= "gcr.io/iguazio/registry-creds-handler:$(VERSION)"
+REGISTRY ?= "gcr.io/iguazio/"
+REGISTRY_HANDLER_IMAGE_NAME ?= "$(REGISTRY)registry-creds-handler:$(VERSION)"
 
 # Link flags
 GO_LINK_FLAGS ?= -s -w
@@ -12,11 +13,19 @@ GO_LINK_FLAGS_INJECT_VERSION := $(GO_LINK_FLAGS) \
 
 .PHONY: build
 build:
+	@echo "Building image"
 	docker build \
 		--build-arg GO_LINK_FLAGS="$(GO_LINK_FLAGS_INJECT_VERSION)" \
 		--file cmd/registrycredshandler/Dockerfile \
 		--tag $(REGISTRY_HANDLER_IMAGE_NAME) \
 		.
+	@echo "Done"
+
+.PHONY: push
+push:
+	@echo "Pushing image"
+	docker push $(REGISTRY_HANDLER_IMAGE_NAME)
+	@echo "Done"
 
 .PHONY: fmt
 fmt:
