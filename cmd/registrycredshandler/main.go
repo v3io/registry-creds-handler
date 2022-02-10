@@ -32,7 +32,7 @@ func run() error {
 
 	if *showVersion {
 		encodedVersionInfo, _ := json.Marshal(version.Get())
-		fmt.Printf(string(encodedVersionInfo))
+		fmt.Print(string(encodedVersionInfo))
 		return nil
 	}
 
