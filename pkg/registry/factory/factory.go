@@ -20,7 +20,7 @@ func CreateRegistry(parentLogger logger.Logger,
 	var err error
 
 	switch registryKind {
-	case registry.ECRRegistryKind:
+	case string(registry.ECRRegistryKind):
 		newRegistry, err = ecr.NewRegistry(parentLogger,
 			secretName,
 			namespace,

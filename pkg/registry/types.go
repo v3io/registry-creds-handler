@@ -1,7 +1,9 @@
 package registry
 
+type DockerRegistryKind string
+
 const (
-	ECRRegistryKind string = "ecr"
+	ECRRegistryKind DockerRegistryKind = "ecr"
 )
 
 type Token struct {
