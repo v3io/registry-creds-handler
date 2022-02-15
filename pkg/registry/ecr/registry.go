@@ -27,7 +27,7 @@ type Registry struct {
 func NewRegistry(parentLogger logger.Logger,
 	secretName string,
 	namespace string,
-	creds string,
+	creds []byte,
 	registryUri string) (*Registry, error) {
 	newRegistry := &Registry{}
 
@@ -63,7 +63,7 @@ func (r *Registry) enrich() error {
 
 	// parse aws credentials
 	var awsCreds registry.AWSCreds
-	if err := json.Unmarshal([]byte(r.Creds), &awsCreds); err != nil {
+	if err := json.Unmarshal(r.Creds, &awsCreds); err != nil {
 		r.Logger.WarnWith("Failed to parse json AWS credentials, checking env", "err", err.Error())
 	}
 

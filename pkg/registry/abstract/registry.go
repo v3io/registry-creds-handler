@@ -12,7 +12,7 @@ type Registry struct {
 	registry    registry.Registry
 	SecretName  string
 	Namespace   string
-	Creds       string
+	Creds       []byte
 	RegistryUri string
 }
 
@@ -20,7 +20,7 @@ func NewRegistry(loggerInstance logger.Logger,
 	registry registry.Registry,
 	secretName string,
 	namespace string,
-	creds string,
+	creds []byte,
 	registryUri string) (*Registry, error) {
 	abstractRegistry := &Registry{
 		Logger:      loggerInstance.GetChild("registry"),
