@@ -29,10 +29,11 @@ func (suite *ECRSuite) TestEnrichAndValidateECRParams() {
 		{
 			name: "sanity",
 			abstractRegistry: &abstract.Registry{
-				Logger:      loggerInstance,
-				SecretName:  "secret",
-				Namespace:   "namespace",
-				Creds:       "{\"region\": \"region\", \"accessKeyID\": \"some access key id\", \"secretAccessKey\": \"some secret access key\"}",
+				Logger:     loggerInstance,
+				SecretName: "secret",
+				Namespace:  "namespace",
+				Creds: []byte(`{"region": "region", "accessKeyID": "some access key id",
+"secretAccessKey": "some secret access key"}`),
 				RegistryUri: "mock.com",
 			},
 			error:   false,
@@ -44,7 +45,7 @@ func (suite *ECRSuite) TestEnrichAndValidateECRParams() {
 				Logger:      loggerInstance,
 				SecretName:  "secret",
 				Namespace:   "namespace",
-				Creds:       "",
+				Creds:       []byte{},
 				RegistryUri: "mock.com",
 			},
 			error:   false,
@@ -58,7 +59,7 @@ func (suite *ECRSuite) TestEnrichAndValidateECRParams() {
 				Logger:      loggerInstance,
 				SecretName:  "secret",
 				Namespace:   "namespace",
-				Creds:       "{\"region\": \"region\", \"secretAccessKey\": \"some secret access key\"}",
+				Creds:       []byte(`{"region": "region", "secretAccessKey": "some secret access key"}`),
 				RegistryUri: "mock.com",
 			},
 			error:   true,
@@ -70,7 +71,7 @@ func (suite *ECRSuite) TestEnrichAndValidateECRParams() {
 				Logger:      loggerInstance,
 				SecretName:  "secret",
 				Namespace:   "namespace",
-				Creds:       "{\"accessKeyID\": \"some access key id\", \"secretAccessKey\": \"some secret access key\"}",
+				Creds:       []byte(`{"accessKeyID": "some access key id", "secretAccessKey": "some secret access key"}`),
 				RegistryUri: "mock.com",
 			},
 			error:   true,
@@ -79,10 +80,11 @@ func (suite *ECRSuite) TestEnrichAndValidateECRParams() {
 		{
 			name: "missingSecretName",
 			abstractRegistry: &abstract.Registry{
-				Logger:      loggerInstance,
-				SecretName:  "",
-				Namespace:   "namespace",
-				Creds:       "{\"region\": \"region\", \"accessKeyID\": \"some access key id\", \"secretAccessKey\": \"some secret access key\"}",
+				Logger:     loggerInstance,
+				SecretName: "",
+				Namespace:  "namespace",
+				Creds: []byte(`{"region": "region", "accessKeyID": "some access key id",
+"secretAccessKey": "some secret access key"}`),
 				RegistryUri: "mock.com",
 			},
 			error:   true,
@@ -91,13 +93,14 @@ func (suite *ECRSuite) TestEnrichAndValidateECRParams() {
 		{
 			name: "missingNamespace",
 			abstractRegistry: &abstract.Registry{
-				Logger:      loggerInstance,
-				SecretName:  "secret",
-				Namespace:   "",
-				Creds:       "{\"region\": \"region\", \"accessKeyID\": \"some access key id\", \"secretAccessKey\": \"some secret access key\"}",
+				Logger:     loggerInstance,
+				SecretName: "secret",
+				Namespace:  "",
+				Creds: []byte(`{"region": "region", "accessKeyID": "some access key id", 
+"secretAccessKey": "some secret access key"}`),
 				RegistryUri: "mock.com",
 			},
-			error:   true,
+			error:   false,
 			withEnv: false,
 		},
 	}
@@ -112,13 +115,24 @@ func (suite *ECRSuite) TestEnrichAndValidateECRParams() {
 				suite.Require().NoError(err)
 				err = os.Setenv("AWS_DEFAULT_REGION", "some region")
 				suite.Require().NoError(err)
+			} else {
+				err := os.Setenv("AWS_ACCESS_KEY_ID", "")
+				suite.Require().NoError(err)
+				err = os.Setenv("AWS_SECRET_ACCESS_KEY", "")
+				suite.Require().NoError(err)
+				err = os.Setenv("AWS_ROLE_ARN", "")
+				suite.Require().NoError(err)
+				err = os.Setenv("AWS_DEFAULT_REGION", "")
+				suite.Require().NoError(err)
 			}
 
 			r := &Registry{
 				Registry: test.abstractRegistry,
 			}
 			err := r.EnrichAndValidate()
-			if !test.error {
+			if test.error {
+				suite.Require().Error(err)
+			} else {
 				suite.Require().NoError(err)
 			}
 

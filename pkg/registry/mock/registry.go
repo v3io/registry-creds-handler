@@ -19,7 +19,7 @@ type Registry struct {
 func NewRegistry(parentLogger logger.Logger,
 	secretName string,
 	namespace string,
-	creds string,
+	creds []byte,
 	registryUri string) (*Registry, error) {
 	newRegistry := &Registry{}
 

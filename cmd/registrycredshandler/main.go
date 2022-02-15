@@ -24,7 +24,8 @@ func run() error {
 	registryUri := flag.String("registry-uri", "", "Registry URI to use for authentication")
 	refreshRate := flag.Int64("refresh-rate", 60, "Refresh credentials rate in min (Default: 60 minutes)")
 	kubeConfigPath := flag.String("kubeconfig-path", "", "Kubernetes config path, If not specified uses in cluster config")
-	creds := flag.String("creds", "", "Credentials to retrieve registry authorization token in JSON format, entries must be in lowerCamelCase")
+	creds := flag.String("creds", "",
+		"Credentials to retrieve registry authorization token in JSON format and base64 encoded, entries must be in lowerCamelCase")
 	showVersion := flag.Bool("version", false, "Show version in j and exit")
 	logsFormat := flag.String("logs-format", "humanreadable", "Logging format (json|humanreadable) (Default: humanreadable)")
 

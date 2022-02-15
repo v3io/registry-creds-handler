@@ -19,7 +19,9 @@ type DockerConfigJSON struct {
 }
 
 type RegistryAuth struct {
-	Auth string `json:"auth"`
+	Auth     string `json:"auth"`
+	Username string `json:"username"`
+	Password string `json:"password"`
 }
 
 func GetClientConfig(kubeConfigPath string) (*rest.Config, error) {
@@ -115,9 +117,16 @@ func CompileRegistryAuthSecret(token *registry.Token) (*v1.Secret, error) {
 		Type: "kubernetes.io/dockerconfigjson",
 	}
 
+	username, password, err := ParseAuth(token.Auth)
+	if err != nil {
+		return nil, errors.Wrap(err, "Failed to parse auth")
+	}
+
 	auths := map[string]RegistryAuth{}
 	auths[token.RegistryUri] = RegistryAuth{
-		Auth: token.Auth,
+		Auth:     token.Auth,
+		Username: username,
+		Password: password,
 	}
 
 	configJSON, err := json.Marshal(DockerConfigJSON{Auths: auths})

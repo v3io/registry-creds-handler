@@ -1,6 +1,8 @@
 package factory
 
 import (
+	"encoding/base64"
+
 	"github.com/v3io/registry-creds-handler/pkg/registry"
 	"github.com/v3io/registry-creds-handler/pkg/registry/ecr"
 
@@ -19,12 +21,17 @@ func CreateRegistry(parentLogger logger.Logger,
 	var newRegistry registry.Registry
 	var err error
 
+	encodedCreds, err := base64.StdEncoding.DecodeString(creds)
+	if err != nil {
+		return nil, errors.Wrap(err, "Failed to decode creds")
+	}
+
 	switch registryKind {
-	case registry.ECRRegistryKind:
+	case string(registry.ECRRegistryKind):
 		newRegistry, err = ecr.NewRegistry(parentLogger,
 			secretName,
 			namespace,
-			creds,
+			encodedCreds,
 			registryUri)
 		if err != nil {
 			return nil, errors.Wrap(err, "Failed to create ECR kind")

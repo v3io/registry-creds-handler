@@ -20,7 +20,7 @@ type HandlerSuite struct {
 
 func (suite *HandlerSuite) TestCreateOrUpdateSecretSanity() {
 	loggerInstance, _ := common.CreateLogger("test", true, os.Stdout, "humanreadable")
-	mockedRegistry, _ := mock.NewRegistry(loggerInstance, "secret name", "some namespace", "", "")
+	mockedRegistry, _ := mock.NewRegistry(loggerInstance, "secret name", "some namespace", []byte{}, "")
 	mockedKubeClientSet := fake.NewSimpleClientset()
 	handler, err := NewHandler(loggerInstance, mockedKubeClientSet, mockedRegistry, 0, "mock")
 	suite.Require().NoError(err)
@@ -32,7 +32,7 @@ func (suite *HandlerSuite) TestCreateOrUpdateSecretSanity() {
 
 func (suite *HandlerSuite) TestRefreshingSecretSanity() {
 	loggerInstance, _ := common.CreateLogger("test", true, os.Stdout, "humanreadable")
-	mockedRegistry, _ := mock.NewRegistry(loggerInstance, "secret name", "some namespace", "", "")
+	mockedRegistry, _ := mock.NewRegistry(loggerInstance, "secret name", "some namespace", []byte{}, "")
 	mockedKubeClientSet := fake.NewSimpleClientset()
 	handler, err := NewHandler(loggerInstance, mockedKubeClientSet, mockedRegistry, 10, "mock")
 	suite.Require().NoError(err)
